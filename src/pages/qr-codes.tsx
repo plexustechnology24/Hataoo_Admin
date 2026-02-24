@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { QrGenerateDialog } from "@/components/qr-generate-dialog"
 import { QrCodeCard } from "@/components/qr-code-card"
 import { generateQrCodes, getAllQrCodes } from "@/api/qrCodeApi"
+import { Loader2 } from "lucide-react"
 
 export function QrCodesPage() {
   const [qrCodes, setQrCodes] = useState<any[]>([])
@@ -78,7 +79,14 @@ export function QrCodesPage() {
         </Button>
       </div>
 
-      {qrCodes.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading QR codes...</p>
+          </div>
+        </div>
+      ) : qrCodes.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-dashed py-16">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <IconQrcode className="h-7 w-7 text-muted-foreground" />
