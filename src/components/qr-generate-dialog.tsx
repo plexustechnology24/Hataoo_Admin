@@ -1,5 +1,4 @@
 import { useForm } from "react-hook-form"
-
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -11,6 +10,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 
 interface QrGenerateDialogProps {
   open: boolean
@@ -37,6 +38,26 @@ export function QrGenerateDialog({
   } = useForm<FormValues>({
     defaultValues: { count: 1 },
   })
+
+  // Handle browser back button to close dialog
+  useEffect(() => {
+    if (!open) return;
+
+    window.history.pushState({ modalOpen: true }, "");
+
+    const handlePopState = (event: PopStateEvent) => {
+      onOpenChange(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state && window.history.state.modalOpen) {
+        window.history.back();
+      }
+    };
+  }, [open, onOpenChange]);
 
   function onSubmit(data: FormValues) {
     onGenerate(Number(data.count))
@@ -108,7 +129,11 @@ export function QrGenerateDialog({
                      transition-all 
                      duration-200"
             >
-              {loading ? "Generating..." : "Generate"}
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-black" />
+              ) : (
+                "Generate"
+              )}
             </Button>
           </DialogFooter>
         </form>

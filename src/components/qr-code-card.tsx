@@ -27,24 +27,10 @@ export function QrCodeCard({ index, value, image, isActive }: QrCodeCardProps) {
       </CardContent>
 
       <CardFooter className="flex flex-col items-center gap-2 pb-4">
-        {/* <p className="text-sm font-medium text-muted-foreground">
-          QR Code {index}
-        </p> */}
-
-        {/* Clickable Link */}
-        {/* <a
-          href={value}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-blue-600 underline break-all text-center"
-        >
-          {value}
-        </a> */}
-
         {isActive !== undefined && (
           <span
             className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-xs font-semibold 
-      ${isActive
+        ${isActive
                 ? "bg-green-50 text-green-700 border border-green-300"
                 : "bg-yellow-50 text-yellow-700 border border-yellow-300"
               }`}
@@ -52,6 +38,16 @@ export function QrCodeCard({ index, value, image, isActive }: QrCodeCardProps) {
             {isActive ? "Active" : "Inactive"}
           </span>
         )}
+
+        {/* Clickable Link */}
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-blue-600 underline break-all text-center"
+        >
+          {value}
+        </a>
       </CardFooter>
     </Card>
   )
