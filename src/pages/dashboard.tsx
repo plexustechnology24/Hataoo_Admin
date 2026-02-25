@@ -12,11 +12,11 @@ export function DashboardPage() {
         </p>
       </div>
       <DashboardCards />
-      <div className="flex-1 rounded-lg border border-dashed flex items-center justify-center min-h-[200px]">
+      {/* <div className="flex-1 rounded-lg border border-dashed flex items-center justify-center min-h-[200px]">
         <p className="text-sm text-muted-foreground">
           Activity feed will appear here once you generate QR codes.
         </p>
-      </div>
+      </div> */}
     </>
   )
 }

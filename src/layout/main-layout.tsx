@@ -1,27 +1,35 @@
-import { Outlet } from "react-router-dom"
-import { AppSidebar } from "@/layout/app-sidebar"
-import { SiteHeader } from "@/layout/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { Outlet } from "react-router-dom";
+import { AppSidebar } from "@/layout/app-sidebar";
+import { SiteHeader } from "@/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export function MainLayout() {
   return (
     <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "16rem",
-          "--header-height": "3.5rem",
-        } as React.CSSProperties
-      }
+      style={{
+        "--sidebar-width": "16rem",
+        "--header-height": "3.5rem",
+      } as React.CSSProperties}
     >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-            <Outlet />
+      <div className="flex h-screen w-screen overflow-hidden">
+        {/* Sidebar */}
+        <AppSidebar variant="inset" />
+
+        {/* Content area */}
+        <SidebarInset>
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="sticky top-0 z-10">
+              <SiteHeader />
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <Outlet />
+            </div>
           </div>
-        </div>
-      </SidebarInset>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
-  )
+  );
 }
