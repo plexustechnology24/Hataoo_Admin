@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconSearch, IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { QrGenerateDialog } from "@/components/qr-generate-dialog";
 import { QrCodeCard } from "@/components/qr-code-card";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pagination } from "@/components/ui/pagination";
 import { QrDetailsDialog } from "@/components/qr-details-dialog";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function QrCodesPage() {
   const [qrCodes, setQrCodes] = useState<any[]>([]);
@@ -23,6 +25,8 @@ export function QrCodesPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
   // Handle online/offline events dynamically
   useEffect(() => {
@@ -39,7 +43,7 @@ export function QrCodesPage() {
   }, []);
 
   // Fetch All QR Codes
-  const fetchQrs = async (currentPage = 1) => {
+  const fetchQrs = async (currentPage = 1, search = "") => {
     if (!navigator.onLine) {
       setOffline(true);
       return;
@@ -49,14 +53,18 @@ export function QrCodesPage() {
     setError(false);
     try {
       setLoading(true);
-      const data = await getAllQrCodes({ page: currentPage, limit });
+      const data = await getAllQrCodes({
+        page: currentPage,
+        limit,
+        search: search || undefined
+      });
       const transformedData = data?.data?.map((item) => ({
         id: item._id,
         qrLink: item.qrLink,
         qrImage: item.qrImage,
         isActive: item.isActive,
         code: item.code,
-      }));      
+      }));
       setQrCodes(transformedData);
       setTotalPages(data.meta.pages || 1);
     } catch (err: any) {
@@ -70,9 +78,20 @@ export function QrCodesPage() {
     }
   };
 
+  // Fetch when page or search changes
   useEffect(() => {
-    fetchQrs(page);
-  }, [page]);
+    fetchQrs(page, debouncedSearch);
+  }, [page, debouncedSearch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setPage(1);
+  };
 
   const handleGenerate = async (count: number) => {
     if (!navigator.onLine) return;
@@ -80,7 +99,7 @@ export function QrCodesPage() {
     try {
       setGenerating(true);
       await generateQrCodes(count);
-      await fetchQrs();
+      await fetchQrs(page, debouncedSearch);
       setDialogOpen(false);
       toast.success(`${count} QR code(s) generated successfully!`);
     } catch (error) {
@@ -96,7 +115,7 @@ export function QrCodesPage() {
     try {
       await deleteQrCode(deleteModal.id);
       toast.success("QR code deleted successfully!");
-      fetchQrs(page);
+      fetchQrs(page, debouncedSearch);
       setDeleteModal({ open: false });
     } catch (err) {
       console.error(err);
@@ -116,7 +135,7 @@ export function QrCodesPage() {
     } catch (err) {
       toast.error("Failed to fetch QR code details");
     }
-  };  
+  };
 
   return (
     <>
@@ -130,14 +149,46 @@ export function QrCodesPage() {
               Generate and manage your QR codes.
             </p>
           </div>
-          <Button
-            onClick={() => setDialogOpen(true)}
-            className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-semibold shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4"
-          >
-            <IconPlus className="h-4 w-4 mr-1" />
-            Add QR
-          </Button>
+
+          {/* Search and Add Button Container */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 sm:min-w-[300px]">
+              <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search QR codes..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="pl-9 pr-9 w-full rounded-xl border-gray-200 focus-visible:border-yellow-500 focus-visible:ring-0 transition-colors"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <IconX className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Add Button */}
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-semibold shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4"
+            >
+              <IconPlus className="h-4 w-4 mr-1" />
+              Add QR
+            </Button>
+          </div>
         </div>
+
+        {/* Search Results Info */}
+        {searchTerm && !loading && qrCodes?.length > 0 && (
+          <div className="mb-4 text-sm text-muted-foreground">
+            Found {qrCodes.length} result(s) for "{searchTerm}"
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto pb-4 scrollbar-custom">
           {loading ? (
@@ -154,11 +205,20 @@ export function QrCodesPage() {
             </div>
           ) : qrCodes?.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 h-full">
-              <EmptyState type="empty" message="No QR codes yet. Click Add to generate." />
-              <Button variant="outline" onClick={() => setDialogOpen(true)}>
-                <IconPlus className="h-4 w-4" />
-                Generate QR Codes
-              </Button>
+              {searchTerm ? (
+                <EmptyState
+                  type="empty"
+                  message={`No QR codes found matching "${searchTerm}"`}
+                />
+              ) : (
+                <>
+                  <EmptyState type="empty" message="No QR codes yet. Click Add to generate." />
+                  <Button variant="outline" onClick={() => setDialogOpen(true)}>
+                    <IconPlus className="h-4 w-4" />
+                    Generate QR Codes
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pr-4">
